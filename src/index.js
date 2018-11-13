@@ -5,6 +5,7 @@ import styles from './index.module.scss';
 import info from './assets/info.png';
 import Sound from './music/sound';
 import Renderer from './renderer';
+import chordsDictionary from './music/chords-dictionary';
 import playSvg from './assets/play.png';
 import pauseSvg from './assets/pause.png';
 
@@ -35,8 +36,8 @@ class App extends Component {
     this.matrix = [];
     this.rawMatrix = [];
     this.beat = 0;
-    // this.serverUrl = 'http://140.109.21.193:5003/';
-    this.serverUrl = 'http://140.109.135.76:5003/';
+    this.serverUrl = 'http://140.109.21.193:5003/';
+    // this.serverUrl = 'http://140.109.135.76:5003/';
   }
 
   componentDidMount() {
@@ -52,7 +53,7 @@ class App extends Component {
     // window.addEventListener('mouseup', this.handleMouseUp.bind(this));
 
     requestAnimationFrame(() => { this.update() });
-    this.getLeadsheetVaeStatic();
+    this.getM2CStatic();
   }
 
   componentWillUnmount() {
@@ -77,7 +78,7 @@ class App extends Component {
     this.sound.changeMatrix(m);
   }
 
-  getLeadsheetVae(url, restart = true) {
+  getM2C(url, restart = true) {
     fetch(url, {
       headers: {
         'content-type': 'application/json'
@@ -86,10 +87,11 @@ class App extends Component {
     })
       .then(r => r.json())
       .then(r => {
-        this.changeMatrix(r['melody']);
-        this.sound.chords = r['chord'];
-        this.renderer.chords = r['chord'];
-        console.log(r['chord']);
+        const [m, c] = this.preprocess(r);
+        this.changeMatrix(m);
+        this.sound.chords = c;
+        this.renderer.chords = c;
+
         if (restart) {
           this.sound.start();
           this.sound.sectionIndex = 0;
@@ -98,7 +100,17 @@ class App extends Component {
       .catch(e => console.log(e));
   }
 
-  getLeadsheetVaeRandom() {
+  preprocess(r) {
+    const melody = r['melody'];
+    const chords = r['chord'];
+    const m = [melody];
+    const c = [chords.map(r => r.map(x => chordsDictionary[x]))];
+    console.log(m);
+    console.log(c);
+    return [m, c];
+  }
+
+  getM2CRandom() {
     let s1 = Math.floor(Math.random() * 4);
     let s2 = Math.floor(Math.random() * 4);
     while (s2 === s1) {
@@ -110,17 +122,18 @@ class App extends Component {
     s2 = s2.toString();
 
     const url = this.serverUrl + `static/${s1}/${s2}`;
-    this.getLeadsheetVae(url);
+    this.getM2C(url);
   }
 
-  getLeadsheetVaeStatic() {
-    const url = this.serverUrl + 'static';
-    this.getLeadsheetVae(url);
+  getM2CStatic() {
+    const id = Math.floor(Math.random() * 6);
+    const url = this.serverUrl + 'static/' + id.toString();
+    this.getM2C(url);
   }
 
-  getLeadsheetVaeStaticShift(dir = 0, step = 0.2) {
+  getM2CStaticShift(dir = 0, step = 0.2) {
     const url = this.serverUrl + 'static/' + dir.toString() + '/' + step.toString();
-    this.getLeadsheetVae(url);
+    this.getM2C(url);
   }
 
   update() {
@@ -191,7 +204,7 @@ class App extends Component {
       }
       if (event.keyCode === 82) {
         // r
-        this.getLeadsheetVaeRandom();
+        this.getM2CRandom();
       }
     }
   }
@@ -264,7 +277,7 @@ class App extends Component {
       <div>
         <div className={styles.title}>
           <a href="https://github.com/vibertthio/looop" target="_blank" rel="noreferrer noopener">
-            Melody VAE | MAC Lab
+            Comp It | MAC Lab
           </a>
           <button
             className={styles.btn}

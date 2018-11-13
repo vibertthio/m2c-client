@@ -40,9 +40,9 @@ export default class Renderer {
     this.selectedLatent = 20;
     this.displayWidth = 0;
 
-    this.pianorollGrids[0] = new PianorollGrid(this,  -1.5, 0);
+    // this.pianorollGrids[0] = new PianorollGrid(this,  -1.5, 0);
     this.pianorollGrids[1] = new PianorollGrid(this,  0);
-    this.pianorollGrids[2] = new PianorollGrid(this,  1.5, 8);
+    // this.pianorollGrids[2] = new PianorollGrid(this,  1.5, 8);
 
     this.noise = new Noise(Math.random());
 
@@ -86,7 +86,7 @@ export default class Renderer {
     this.beat = b;
     this.sectionIndex = sectionIndex;
     const ctx = this.canvas.getContext('2d');
-    ctx.font = '1rem monospace';
+    ctx.font = '0.8rem monospace';
     this.width = scr.width;
     this.height = scr.height;
     const width = scr.width;
@@ -96,16 +96,16 @@ export default class Renderer {
     ctx.fillStyle = this.backgroundColor;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    const h = Math.min(width, height) * 0.18;
+    const h = Math.min(width, height) * 0.25;
     const w = width * 0.5;
     this.displayWidth = w;
     this.dist = h * 1.2;
 
     ctx.translate(width * 0.5, height * 0.5);
 
-    this.pianorollGrids[0].draw(ctx, w, h);
+    // this.pianorollGrids[0].draw(ctx, w, h);
     this.pianorollGrids[1].draw(ctx, w * 0.9, h * 1.2);
-    this.pianorollGrids[2].draw(ctx, w, h);
+    // this.pianorollGrids[2].draw(ctx, w, h);
 
     this.drawInterpolation(ctx, w * 0.1, h);
     ctx.restore();
@@ -115,7 +115,7 @@ export default class Renderer {
     ctx.save();
     ctx.translate(-(this.displayWidth) * 0.5, 0);
     this.drawFrame(ctx, w * 1.1, h * 1.2 * 1.1);
-    const h_step = (h / this.matrix.length) * 1.2;
+    const h_step = (h / this.matrix.length) * 0.1;
     this.h_step = h_step;
 
     // start drawing
@@ -128,7 +128,7 @@ export default class Renderer {
       if (i === this.sectionIndex) {
         ctx.fillStyle = '#F00';
       }
-      ctx.fillRect(0, 0, w * 0.4, h_step * 0.5);
+      ctx.fillRect(0, 0, w * 0.2, h_step * 0.5);
       ctx.restore();
     }
     ctx.restore();
@@ -189,7 +189,7 @@ export default class Renderer {
 
   // draw frame
   drawFrame(ctx, w, h) {
-    const unit = this.dist * 0.04;
+    const unit = this.dist * 0.02;
 
     ctx.save();
 

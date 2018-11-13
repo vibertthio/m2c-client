@@ -41,11 +41,11 @@ export default class PianorollGrid {
 
 
     // roll
-    const w_step = w / (48 * 4);
+    const w_step = w / (96 * 8);
     const h_step = h / 48;
-    for (let i = 0; i < 4; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       ctx.save();
-      ctx.translate((48 * i) * w_step, 15);
+      ctx.translate((96 * i) * w_step, 15);
       if (this.renderer.chords.length > 0) {
 
         const chords = this.renderer.chords[this.sectionIndex][i]
@@ -54,21 +54,21 @@ export default class PianorollGrid {
           if (c !== prevC) {
             ctx.fillStyle = '#FFF';
             ctx.fillText(c, 5, -8);
-            ctx.translate(12 * w_step, 0)
+            ctx.translate(48 * w_step, 0)
           }
           prevC = c;
         })
       }
       ctx.restore();
 
-      for (let t = 0; t < 48; t += 1) {
+      for (let t = 0; t < 96; t += 1) {
         const note = this.matrix[this.sectionIndex][i][t];
-        if (note !== -1) {
+        if (note !== -1 && note > 0) {
           const y = 48 - (note - 48);
           ctx.save();
           ctx.strokeStyle = 'none';
-          ctx.translate(((48 * i) + t) * w_step, y * h_step);
-          if ((48 * i) + t === (this.beat % 192)) {
+          ctx.translate(((96 * i) + t) * w_step, y * h_step);
+          if ((96 * i) + t === (this.beat % (96 * 8))) {
             ctx.fillStyle = '#FFF';
             ctx.fillText(note, 5, -8);
           }
@@ -81,7 +81,7 @@ export default class PianorollGrid {
 
     // progress
     if (this.fixed === -1) {
-      ctx.translate((this.beat % 192) * w_step, 0);
+      ctx.translate((this.beat % (96 * 8)) * w_step, 0);
       ctx.strokeStyle = '#F00';
       ctx.beginPath();
       ctx.moveTo(0, 0);

@@ -49,11 +49,11 @@ export default class Sound {
 
       const index = this.section[this.barIndex][col];
 
-      if (index === -1) {
+      if (index === 0) {
         const prevNote = Tone.Frequency(this.noteOn, 'midi');
         this.synth.triggerRelease(prevNote, time);
       } else if (index !== this.noteOn) {
-        if (this.noteOn !== -1) {
+        if (this.noteOn !== 0) {
           const prevNote = Tone.Frequency(this.noteOn, 'midi');
           this.synth.triggerRelease(prevNote, time);
         }
@@ -62,10 +62,10 @@ export default class Sound {
       }
       this.noteOn = index;
 
-      if (col % 12 === 0 && this.chords) {
-        const chord = this.chords[this.sectionIndex][this.barIndex][Math.floor(col / 12)];
+      if (col % 48 === 0 && this.chords !== []) {
+        const chord = this.chords[this.sectionIndex][this.barIndex][Math.floor(col / 48)];
         const notes = Chord.notes(chord).map(n => n + '3');
-        this.comp.triggerAttackRelease(notes, '12n', time, 0.5);
+        this.comp.triggerAttackRelease(notes, '4n', time, 0.5);
 
         // if (chord !== this.prevChord) {
         //   const prevNotes = Chord.notes(this.prevChord).map(n => n + '4');
@@ -76,7 +76,7 @@ export default class Sound {
         this.prevChord = chord;
       }
 
-      const barIndex = Math.floor(this.beat / 48) % this.section.length;
+      const barIndex = Math.floor(this.beat / 96) % this.section.length;
       if (this.barIndex !== barIndex) {
         this.barIndex = barIndex;
         if (this.barIndex === 0) {
@@ -87,7 +87,7 @@ export default class Sound {
         console.log(`bar: [${barIndex + 1} / ${this.section.length}]`);
       }
 
-    }, Array.from(Array(48).keys()), '48n');
+    }, Array.from(Array(96).keys()), '96n');
     Transport.start();
   }
 
