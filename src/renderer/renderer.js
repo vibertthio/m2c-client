@@ -25,7 +25,10 @@ export default class Renderer {
     this.chords = [];
     this.pianorollGrids = [];
     this.dist = 0;
+    this.fontSize = 1.0;
     this.beat = 0;
+    this.sectionIndex = 0;
+    this.barIndex = 0;
 
     this.frameCount = 0;
     this.halt = false;
@@ -40,16 +43,19 @@ export default class Renderer {
     this.selectedLatent = 20;
     this.displayWidth = 0;
 
-    // this.pianorollGrids[0] = new PianorollGrid(this,  -1.5, 0);
-    this.pianorollGrids[1] = new PianorollGrid(this,  0);
-    // this.pianorollGrids[2] = new PianorollGrid(this,  1.5, 8);
+    this.pianorollGrids[0] = new PianorollGrid(this, -1.0);
 
+
+    // graphs
+    this.latents = [[], [], []];
+    this.latentGraphs = [];
     this.noise = new Noise(Math.random());
 
     // interpolation display
     this.h_step = 0;
 
     this.initMatrix();
+    this.initGraph();
   }
 
   initMatrix() {
@@ -61,6 +67,24 @@ export default class Renderer {
     }
 
   }
+
+  initGraph() {
+    // for (let i = 0; i < 32; i += 1) {
+    //   this.latent[i] = 0;
+    //   for (let j = 0; j < 3; j += 1) {
+    //     this.latents[j][i] = -0.01 + 0.02 * Math.random();
+    //   }
+    // }
+
+    this.latentGraphs[0] = new LatentGraph(
+      this, 0.3, 0.66, 1.5, -0.33, 0.8);
+    this.latentGraphs[1] = new LatentGraph(
+      this, 0.3, 0.66, 1.5, 0.33, 0.8);
+
+    this.latentGraphs[0].setDisplay(3);
+    this.latentGraphs[1].setDisplay(10);
+  }
+
 
   randomMatrix() {
     for (let i = 0; i < 96; i += 1) {
@@ -84,6 +108,7 @@ export default class Renderer {
     }
     this.frameCount += 1;
     this.beat = b;
+    this.barIndex = barIndex;
     this.sectionIndex = sectionIndex;
     const ctx = this.canvas.getContext('2d');
     ctx.font = '0.8rem monospace';
@@ -99,33 +124,33 @@ export default class Renderer {
     const h = Math.min(width, height) * 0.25;
     const w = width * 0.5;
     this.displayWidth = w;
-    this.dist = h * 1.2;
+    this.dist = h;
+    this.setFontSize(ctx, Math.pow(w / 1000, 0.4));
 
-    ctx.translate(width * 0.5, height * 0.5);
+    ctx.translate(width * 0.5, height * 0.5 - 15);
 
-    // this.pianorollGrids[0].draw(ctx, w, h);
-    this.pianorollGrids[1].draw(ctx, w * 0.9, h * 1.2);
-    // this.pianorollGrids[2].draw(ctx, w, h);
+    this.pianorollGrids[0].draw(ctx, w * 1.2, h * 1.0);
 
-    this.drawInterpolation(ctx, w * 0.1, h);
+    // this.drawInterpolation(ctx, w * 0.1, h);
+    this.drawLatents(ctx);
     ctx.restore();
   }
 
   drawInterpolation(ctx, w, h) {
     ctx.save();
     ctx.translate(-(this.displayWidth) * 0.5, 0);
-    this.drawFrame(ctx, w * 1.1, h * 1.2 * 1.1);
-    const h_step = (h / this.matrix.length) * 0.1;
+    this.drawFrame(ctx, w * 1.1, h * 1.1);
+    const h_step = (h / 8);
     this.h_step = h_step;
 
     // start drawing
     ctx.translate(-w * 0.2, 0);
-    for (let i = 0; i < this.matrix.length; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       ctx.save();
-      const j = i - (this.matrix.length / 2);
+      const j = i - (8 / 2);
       ctx.translate(0, h_step * (j + 0.25));
       ctx.fillStyle = '#555';
-      if (i === this.sectionIndex) {
+      if (i === this.barIndex) {
         ctx.fillStyle = '#F00';
       }
       ctx.fillRect(0, 0, w * 0.2, h_step * 0.5);
@@ -185,6 +210,10 @@ export default class Renderer {
     const y = e.clientY - (this.height * 0.5);
   }
 
+  setFontSize(ctx, amt) {
+    this.fontSize = amt;
+    ctx.font = this.fontSize.toString() + 'rem monospace';
+  }
 
 
   // draw frame
@@ -221,6 +250,20 @@ export default class Renderer {
 
     ctx.restore();
   }
+
+
+  // graphs
+  drawLatents(ctx) {
+    for (let i = 0; i < 2; i += 1) {
+      for (let j = 0; j < 12; j += 1) {
+        const value = this.noise.perlin2(i * 2 + j * 0.1, this.frameCount * 0.005);
+        this.latents[i][j] = lerp(value, 0, 1, -0.01, 0.01);
+      }
+      this.latentGraphs[i].draw(ctx, this.latents[i], this.dist);
+
+    }
+  }
+
 
 
 }

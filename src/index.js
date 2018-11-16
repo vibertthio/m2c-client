@@ -4,7 +4,7 @@ import { render } from 'react-dom';
 import styles from './index.module.scss';
 import info from './assets/info.png';
 import Sound from './music/sound';
-import Renderer from './renderer';
+import Renderer from './renderer/renderer';
 import chordsDictionary from './music/chords-dictionary';
 import playSvg from './assets/play.png';
 import pauseSvg from './assets/pause.png';
@@ -91,7 +91,6 @@ class App extends Component {
         this.changeMatrix(m);
         this.sound.chords = c;
         this.renderer.chords = c;
-
         if (restart) {
           this.sound.start();
           this.sound.sectionIndex = 0;
@@ -103,7 +102,7 @@ class App extends Component {
   preprocess(r) {
     const melody = r['melody'];
     const chords = r['chord'];
-    const m = [melody];
+    const m = [melody.map(r => r.map(x => ((x === 0) ? -1 : x - 12)))];
     const c = [chords.map(r => r.map(x => chordsDictionary[x]))];
     console.log(m);
     console.log(c);

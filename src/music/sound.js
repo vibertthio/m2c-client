@@ -49,11 +49,11 @@ export default class Sound {
 
       const index = this.section[this.barIndex][col];
 
-      if (index === 0) {
+      if (index === -1) {
         const prevNote = Tone.Frequency(this.noteOn, 'midi');
         this.synth.triggerRelease(prevNote, time);
       } else if (index !== this.noteOn) {
-        if (this.noteOn !== 0) {
+        if (this.noteOn !== -1) {
           const prevNote = Tone.Frequency(this.noteOn, 'midi');
           this.synth.triggerRelease(prevNote, time);
         }

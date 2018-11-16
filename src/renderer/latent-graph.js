@@ -9,7 +9,7 @@ export default class LatentGraph {
     this.graphRadius = 0;
     this.graphWidth = 0;
     this.graphHeight = 0;
-    this.graphRadiusRatio = 2;
+    this.graphRadiusRatio = 10;
 
     this.radiusRatio = rr;
     this.widthRatio = wr;
@@ -25,8 +25,8 @@ export default class LatentGraph {
     this.dashAmounts = 40;
   }
 
-  setDisplay() {
-    this.dims = 10;
+  setDisplay(dims = 3) {
+    this.dims = dims;
     this.showDiff = false;
     this.showText = false;
     this.showDiagram = true;
@@ -35,12 +35,12 @@ export default class LatentGraph {
   }
 
   update() {
-    const { dist, gridWidth } = this.renderer;
+    const { dist, displayWidth } = this.renderer;
     this.graphRadius = dist * this.radiusRatio;
-    this.graphWidth = gridWidth * 1.1 * this.widthRatio;
+    this.graphWidth = displayWidth * this.widthRatio;
     this.graphHeight = dist * this.heightRatio;
     this.graphY = dist * this.yShiftRatio;
-    this.graphX = gridWidth * 1.1 * this.xShiftRatio  ;
+    this.graphX = displayWidth * this.xShiftRatio  ;
   }
 
   draw(ctx, latent, unit) {
