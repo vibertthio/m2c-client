@@ -56,6 +56,7 @@ export default class PianorollGrid {
     ctx.translate(this.gridXShift, this.gridYShift)
     const wStep = w / (96 * this.nOfBars);
     const hStep = h / 48;
+    const { fontSizeBase } = this.renderer;
 
     // Leave some space for drawing interpolation
     // if (this.fixed === -1) {
@@ -67,6 +68,7 @@ export default class PianorollGrid {
     ctx.save();
     ctx.translate(0, h * 0.8);
     this.renderer.drawFrame(ctx, this.gridWidth * this.frameRatio, this.gridHeight * 0.3 * this.frameRatio);
+    this.renderer.setFontSize(ctx, fontSizeBase * 1.2);
     ctx.translate(-w * 0.5, 0);
     for (let i = 0; i < this.nOfBars; i += 1) {
       ctx.save();
@@ -78,10 +80,12 @@ export default class PianorollGrid {
           chords.forEach((c, j) => {
             const pos = 96 * i + 48 * j;
             ctx.save();
-            if (b > pos && b < (pos + 12) && this.checkCurrent()) {
+            if (b > pos && b < (pos + 48) && this.checkCurrent()) {
               if (this.currentChordIndex !== pos) {
                 this.currentChordIndex = pos;
                 this.currentChordYShift = 1;
+
+                this.renderer.currentChord = c;
               }
               ctx.translate(0, this.currentChordYShift * -5);
               ctx.fillStyle = '#F00';
@@ -108,6 +112,15 @@ export default class PianorollGrid {
     ctx.save();
     this.renderer.drawFrame(ctx, this.gridWidth * this.frameRatio, this.gridHeight * this.frameRatio);
     ctx.translate(-w * 0.5, -h * 0.5);
+
+    // lines
+    ctx.save();
+    for (let i = 0; i < 48; i += 4) {
+      ctx.translate(0, 4 * hStep);
+      ctx.fillStyle = '#999';
+      ctx.fillRect(0, 0, this.gridWidth, 0.1);
+    }
+    ctx.restore();
 
     this.noteList[this.sectionIndex].forEach((item, index) => {
       const [note, start, end] = item;

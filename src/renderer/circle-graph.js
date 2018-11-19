@@ -1,15 +1,18 @@
-export default class Circle {
+import chordsDictionary from './../music/chords-dictionary';
+
+export default class CircleGraph {
 
   constructor(renderer, rr = 0.6, wr = 0.5, hr = 1.5, xsr = -0.25, ysr = 0.6) {
     this.renderer = renderer;
-    this.latent = [];
-    this.dims = 32;
+    this.positions = new Array(12).fill(0.01);
+    this.dims = 12;
     this.graphX = 0;
     this.graphY = 0;
     this.graphRadius = 0;
     this.graphWidth = 0;
     this.graphHeight = 0;
     this.graphRadiusRatio = 10;
+    this.currentChord = '';
 
     this.radiusRatio = rr;
     this.widthRatio = wr;
@@ -17,30 +20,88 @@ export default class Circle {
     this.xShiftRatio = xsr;
     this.yShiftRatio = ysr;
 
-    this.showDashCircle = true;
-    this.showDiff = true;
-    this.showText = true;
+    this.showDashCircle = false;
+    this.showText = false;
     this.showDiagram = false;
     this.showIndication = true;
-    this.dashAmounts = 40;
+    this.dashAmounts = 25;
+
+    this.initAnimation();
+    this.initChords();
   }
 
-  setDisplay(dims = 3) {
-    this.dims = dims;
-    this.showDiff = false;
-    this.showText = false;
-    this.showDiagram = true;
-    this.showIndication = false;
-    this.dashAmounts = 20;
+  initAnimation() {
+    this.chordTextShift = 0;
+    this.angleShift = 0;
+
+    this.chordPositionX = 0;
+    this.chordPositionY = 0;
+    this.chordPositionXDest = 0;
+    this.chordPositionYDest = 0;
+    this.chordPositionUpdateRatio = 0.08;
+  }
+
+  initChords() {
+    // 0. Dominant
+    // 1. Others
+    // 2. Tonal
+    this.fifths = [
+      [
+        'CM',
+        'GM',
+        'DM',
+        'AM',
+        'EM',
+        'BM',
+        'GbM',
+        'DbM',
+        'AbM',
+        'EbM',
+        'BbM',
+        'FM',
+      ],
+      [
+        'Am',
+        'Em',
+        'Bm',
+        'Gbm',
+        'Dbm',
+        'Abm',
+        'Ebm',
+        'Bbm',
+        'Fm',
+        'Cm',
+        'Gm',
+        'Dm',
+      ],
+    ];
+
+    this.DOMINANT = 0;
+    this.OTHERS = 1;
+    this.TONAL = 2;
+    this.NONE = 3;
   }
 
   update() {
-    const { displayHeight, displayWidth } = this.renderer;
+    const { displayHeight, displayWidth, currentChord } = this.renderer;
     this.graphRadius = displayHeight * this.radiusRatio;
     this.graphWidth = displayWidth * this.widthRatio;
     this.graphHeight = displayHeight * this.heightRatio;
     this.graphY = displayHeight * this.yShiftRatio;
     this.graphX = displayWidth * this.xShiftRatio;
+
+    if (this.currentChord !== currentChord) {
+      this.currentChord = currentChord;
+      this.chordTextShift = 10;
+
+      if (currentChord === 'x') {
+        this.chordPositionXDest = 0;
+        this.chordPositionYDest = 0;
+      }
+
+    }
+
+    this.updateAnimation();
   }
 
   draw(ctx) {
@@ -54,94 +115,169 @@ export default class Circle {
       this.drawDashCircle(ctx);
     }
 
+    this.drawPoints(ctx);
+
     if (this.showIndication) {
       this.drawIndication(ctx, this.graphWidth, this.graphHeight);
     }
 
-    this.drawPoints(ctx);
     ctx.restore();
   }
 
   drawPoints(ctx) {
-    const { selectedLatent, gridWidth } = this.renderer;
+    ctx.save();
+
+    const { frameCount, fontSize, fontSizeBase } = this.renderer;
     const dims = this.dims;
     const unit = this.renderer.displayHeight;
     const angle = 2 * Math.PI / dims;
+    // const angleShift = Math.PI / 6 + (Math.PI * 0.02) * Math.sin(frameCount * 0.03);
+    const angleShift = 0;
 
     let xPrev;
     let yPrev;
     let xFirst;
     let yFirst;
-    for (let i = 0; i < dims; i += 1) {
-      const value = 0.01;
-      ctx.save();
-      const radius = value * this.graphRadiusRatio * unit + this.graphRadius;
-      const x = radius * Math.cos(angle * i);
-      const y = radius * Math.sin(angle * i);
 
-      if (i > 0) {
-        ctx.beginPath();
-        ctx.moveTo(xPrev, yPrev);
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = '#999';
-        ctx.stroke();
-      } else {
-        xFirst = x;
-        yFirst = y;
-      }
-      if (i === this.dims - 1) {
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(xFirst, yFirst);
-        ctx.strokeStyle = '#999';
-        ctx.stroke();
-      }
-      xPrev = x;
-      yPrev = y;
+    ctx.rotate(angleShift);
+    for (let layer = 0; layer < 2; layer += 1) {
+      for (let i = 0; i < dims; i += 1) {
+        const value = this.positions[i] * (layer === 0 ? 1 : -1);
+        ctx.save();
+        const radius = value * this.graphRadiusRatio * unit + this.graphRadius;
 
-      ctx.translate(x, y);
+        const x = radius * Math.cos(angle * i);
+        const y = radius * Math.sin(angle * i);
 
-      if (i === selectedLatent && this.showText) {
-        let xTextPos = [
-          (40 + 0.35 * (160 - radius)) * this.graphWidth / 500,
-          (60 + 0.35 * (160 - radius)) * this.graphWidth / 500,
-        ];
-        let yTextPos = (40 + radius * 0.2) * this.graphWidth / 500;
-        let textGap = 5;
-
-        ctx.fillStyle = '#C00';
-        ctx.strokeStyle = '#555'
-
-        if (i > 24) {
-          yTextPos *= -1;
-        } else if (i > 16) {
-          xTextPos[0] *= -1;
-          xTextPos[1] *= -1;
-          textGap *= -10;
-          yTextPos *= -1;
-        } else if (i > 8) {
-          xTextPos[0] *= -1;
-          xTextPos[1] *= -1;
-          textGap *= -10;
+        if (i > 0) {
+          ctx.beginPath();
+          ctx.moveTo(xPrev, yPrev);
+          ctx.lineTo(x, y);
+          ctx.strokeStyle = '#999';
+          ctx.stroke();
+        } else {
+          xFirst = x;
+          yFirst = y;
         }
-        ctx.fillText((Math.round(value * 10000) / 10000).toString(), xTextPos[1] + textGap, yTextPos);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(xTextPos[0], yTextPos);
-        ctx.lineTo(xTextPos[1], yTextPos);
-        ctx.stroke();
-      }
+        if (i === this.dims - 1) {
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(xFirst, yFirst);
+          ctx.strokeStyle = '#999';
+          ctx.stroke();
+        }
+        xPrev = x;
+        yPrev = y;
 
-      ctx.beginPath();
-      ctx.arc(0, 0, this.graphRadius * 0.03, 0, Math.PI * 2, true);
-      ctx.fillStyle = '#CCC';
-      if (i === selectedLatent) {
-        ctx.fillStyle = '#F00';
-      }
-      ctx.fill();
+        // ctx.translate(x, y);
 
-      ctx.restore();
+        // const c = this.fifths[layer][i];
+        // if (c === this.currentChord) {
+        //   this.chordPositionXDest = x;
+        //   this.chordPositionYDest = y;
+        // }
+
+        // ctx.beginPath();
+        // ctx.arc(
+        //   0,
+        //   0,
+        //   this.graphRadius * (c === this.currentChord ? 0.12 : 0.03),
+        //   0,
+        //   Math.PI * 2,
+        //   true
+        // );
+
+        // ctx.fillStyle = '#999';
+        // ctx.fill();
+
+        // // texts
+        // ctx.save();
+        // // ctx.translate(x * (layer === 0 ? 0.16 : -0.25), y * (layer === 0 ? 0.16 : -0.25));
+        // // ctx.translate(0, fontSize * (layer === 0 ? 0.25 : 0.2));
+        // ctx.translate(0, fontSize * (layer === 0 ? 2.0 : 5.0));
+        // ctx.fillStyle = '#FFF';
+        // if (c === this.currentChord) {
+        //   ctx.fillStyle = '#F00';
+        // } else {
+        //   ctx.translate(x * (layer === 0 ? 0.16 : 0.25), y * (layer === 0 ? 0.16 : 0.25));
+        // }
+        // ctx.textAlign = 'center';
+        // ctx.fillText(this.fifths[layer][i], 0, 0);
+        // ctx.restore();
+
+        ctx.restore();
+      }
     }
+
+    for (let layer = 0; layer < 2; layer += 1) {
+      for (let i = 0; i < dims; i += 1) {
+        const value = this.positions[i] * (layer === 0 ? 1 : -1);
+        ctx.save();
+        const radius = value * this.graphRadiusRatio * unit + this.graphRadius;
+
+        const x = radius * Math.cos(angle * i);
+        const y = radius * Math.sin(angle * i);
+        const c = this.fifths[layer][i];
+        if (c === this.currentChord) {
+          this.chordPositionXDest = x;
+          this.chordPositionYDest = y;
+        }
+
+        ctx.translate(x, y);
+
+        ctx.beginPath();
+        ctx.arc(
+          0,
+          0,
+          this.graphRadius * (c === this.currentChord ? 0.12 : 0.03),
+          0,
+          Math.PI * 2,
+          true
+        );
+
+        ctx.fillStyle = '#FFF';
+        ctx.fill();
+
+        // texts
+        ctx.save();
+        // ctx.translate(x * (layer === 0 ? 0.16 : -0.25), y * (layer === 0 ? 0.16 : -0.25));
+        // ctx.translate(0, fontSize * (layer === 0 ? 0.25 : 0.2));
+        ctx.translate(0, fontSizeBase * (layer === 0 ? 2.0 : 5.0));
+        ctx.fillStyle = '#FFF';
+        if (c === this.currentChord) {
+          this.renderer.setFontSize(ctx, fontSizeBase * 0.8);
+          ctx.fillStyle = '#000';
+        } else {
+          ctx.translate(x * (layer === 0 ? 0.16 : 0.25), y * (layer === 0 ? 0.16 : 0.25));
+        }
+        ctx.textAlign = 'center';
+        ctx.fillText(this.fifths[layer][i], 0, 0);
+        ctx.restore();
+
+        ctx.restore();
+      }
+    }
+    this.drawCurrentChord(ctx);
+
+    ctx.restore();
+  }
+
+  drawCurrentChord(ctx) {
+    const { frameCount } = this.renderer;
+    ctx.save();
+    ctx.translate(this.chordPositionX, this.chordPositionY);
+    ctx.strokeStyle = '#F00';
+    const r = this.graphRadius * (0.25 + 0.03 * Math.sin(frameCount * 0.1));
+
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2, true);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2, true);
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   drawDashCircle(ctx) {
@@ -184,7 +320,6 @@ export default class Circle {
   }
 
   drawIndication(ctx, w, h) {
-    const unit = w / 10;
     const width = 5;
 
     if (!this.fetching) {
@@ -214,5 +349,12 @@ export default class Circle {
     }
   }
 
+  // animations
+  updateAnimation() {
+    this.chordPositionX += (this.chordPositionXDest - this.chordPositionX) * this.chordPositionUpdateRatio;
+    this.chordPositionY += (this.chordPositionYDest - this.chordPositionY) * this.chordPositionUpdateRatio;
+
+    this.chordTextShift += (0 - this.chordTextShift) * 0.05;
+  }
 
 }

@@ -82,9 +82,9 @@ export default class Sound {
         if (this.barIndex === 0) {
           this.sectionIndex = (this.sectionIndex + 1) % this.matrix.length;
           this.section = this.matrix[this.sectionIndex];
-          console.log(`section: [${this.sectionIndex + 1} / ${this.matrix.length}]`)
+          // console.log(`section: [${this.sectionIndex + 1} / ${this.matrix.length}]`)
         }
-        console.log(`bar: [${barIndex + 1} / ${this.section.length}]`);
+        // console.log(`bar: [${barIndex + 1} / ${this.section.length}]`);
       }
 
     }, Array.from(Array(96).keys()), '96n');

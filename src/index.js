@@ -94,6 +94,8 @@ class App extends Component {
         if (restart) {
           this.sound.start();
           this.sound.sectionIndex = 0;
+
+          this.renderer.pianorollGrid.newSectionYShift = 1;
         }
       })
       .catch(e => console.log(e));
@@ -104,8 +106,8 @@ class App extends Component {
     const chords = r['chord'];
     const m = [melody.map(r => r.map(x => ((x === 0) ? -1 : x - 12)))];
     const c = [chords.map(r => r.map(x => chordsDictionary[x]))];
-    console.log(m);
-    console.log(c);
+    // console.log(m);
+    // console.log(c);
     return [m, c];
   }
 
@@ -203,7 +205,7 @@ class App extends Component {
       }
       if (event.keyCode === 82) {
         // r
-        this.getM2CRandom();
+        this.getM2CStatic();
       }
     }
   }

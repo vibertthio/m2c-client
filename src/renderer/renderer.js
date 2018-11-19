@@ -2,32 +2,18 @@ import PianorollGrid from './pianoroll-grid';
 import CircleGraph from './circle-graph';
 import ChordGraph from './chord-graph';
 import { Noise } from 'noisejs';
-
-function lerpColor(a, b, amount) {
-  var ah = +a.replace('#', '0x'),
-    bh = +b.replace('#', '0x'),
-    ar = ah >> 16, ag = ah >> 8 & 0xff, ab = ah & 0xff,
-    br = bh >> 16, bg = bh >> 8 & 0xff, bb = bh & 0xff,
-    rr = ar + amount * (br - ar),
-    rg = ag + amount * (bg - ag),
-    rb = ab + amount * (bb - ab);
-
-  return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
-}
-
-function lerp(v, s1, e1, s2, e2) {
-  return (v - s1) * (e2 - s2) / (e1 - s1);
-}
+import { lerp } from './../utils/utils';
 
 export default class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.matrix = [];
     this.chords = [];
-    this.pianorollGrids = [];
+    this.currentChord = '';
     this.displayWidth = 0;
     this.displayHeight = 0;
-    this.fontSize = 1.0;
+    this.fontSize = 0.8;
+    this.fontSizeBase = 0.8;
     this.beat = 0;
     this.sectionIndex = 0;
     this.barIndex = 0;
@@ -44,7 +30,7 @@ export default class Renderer {
     this.currentUpdateDir = 0;
     this.selectedLatent = 20;
 
-    this.pianorollGrids[0] = new PianorollGrid(this, -1.0);
+    this.pianorollGrid = new PianorollGrid(this, -1.0);
 
 
     // graphs
@@ -66,26 +52,18 @@ export default class Renderer {
         this.matrix[i][t] = -1;
       }
     }
-
   }
 
   initGraph() {
-    // for (let i = 0; i < 32; i += 1) {
-    //   this.latent[i] = 0;
-    //   for (let j = 0; j < 3; j += 1) {
-    //     this.latents[j][i] = -0.01 + 0.02 * Math.random();
-    //   }
-    // }
-
+    // this.chordGraph = new ChordGraph(
+    //   this, 0.3, 0.33, 1.5, -0.50, 0.8);
+    // this.circleGraph = new CircleGraph(
+    //   this, 0.4, 0.99, 1.5, 0.16, 0.8);
     this.chordGraph = new ChordGraph(
-      this, 0.3, 0.66, 1.5, -0.33, 0.8);
+      this, 0.45, 0.66, 1.5, -0.33, 0.8);
     this.circleGraph = new CircleGraph(
-      this, 0.3, 0.66, 1.5, 0.33, 0.8);
-
-    this.chordGraph.setDisplay(3);
-    this.circleGraph.setDisplay(10);
+      this, 0.4, 0.66, 1.5, 0.33, 0.8);
   }
-
 
   randomMatrix() {
     for (let i = 0; i < 96; i += 1) {
@@ -126,11 +104,12 @@ export default class Renderer {
     const w = width * 0.5;
     this.displayWidth = w;
     this.displayHeight = h;
+    this.fontSizeBase = Math.pow(w / 1000, 0.4);
     this.setFontSize(ctx, Math.pow(w / 1000, 0.4));
 
     ctx.translate(width * 0.5, height * 0.5 - 15);
 
-    this.pianorollGrids[0].draw(ctx, w * 1.2, h * 1.0);
+    this.pianorollGrid.draw(ctx, w * 1.2, h * 1.0);
 
     // this.drawInterpolation(ctx, w * 0.1, h);
     this.drawLatents(ctx);
