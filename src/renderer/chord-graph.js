@@ -1,4 +1,4 @@
-export default class LatentGraph {
+export default class ChordGraph {
 
   constructor(renderer, rr = 0.6, wr = 0.5, hr = 1.5 , xsr = -0.25, ysr = 0.6) {
     this.renderer = renderer;
@@ -35,27 +35,20 @@ export default class LatentGraph {
   }
 
   update() {
-    const { dist, displayWidth } = this.renderer;
-    this.graphRadius = dist * this.radiusRatio;
+    const { displayHeight, displayWidth } = this.renderer;
+    this.graphRadius = displayHeight * this.radiusRatio;
     this.graphWidth = displayWidth * this.widthRatio;
-    this.graphHeight = dist * this.heightRatio;
-    this.graphY = dist * this.yShiftRatio;
+    this.graphHeight = displayHeight * this.heightRatio;
+    this.graphY = displayHeight * this.yShiftRatio;
     this.graphX = displayWidth * this.xShiftRatio  ;
   }
 
-  draw(ctx, latent, unit) {
+  draw(ctx) {
     this.update();
-    this.latent = latent;
-    const { selectedLatent, gridWidth } = this.renderer;
-    const dims = this.dims;
-    ctx.save();
 
+    ctx.save();
     ctx.translate(this.graphX, this.graphY);
     this.renderer.drawFrame(ctx, this.graphWidth, this.graphHeight);
-
-    if (this.showDiagram) {
-      this.drawDiagram(ctx, this.graphWidth, this.graphHeight);
-    }
 
     if (this.showDashCircle) {
       this.drawDashCircle(ctx);
@@ -65,6 +58,14 @@ export default class LatentGraph {
       this.drawIndication(ctx, this.graphWidth, this.graphHeight);
     }
 
+    this.drawPoints(ctx);
+    ctx.restore();
+  }
+
+  drawPoints(ctx) {
+    const { selectedLatent, gridWidth } = this.renderer;
+    const dims = this.dims;
+    const unit = this.renderer.displayHeight;
     const angle = 2 * Math.PI / dims;
 
     let xPrev;
@@ -72,22 +73,11 @@ export default class LatentGraph {
     let xFirst;
     let yFirst;
     for (let i = 0; i < dims; i += 1) {
-      const value = latent[i];
+      const value = 0.01;
       ctx.save();
       const radius = value * this.graphRadiusRatio * unit + this.graphRadius;
       const x = radius * Math.cos(angle * i);
       const y = radius * Math.sin(angle * i);
-
-      if (this.showDiff) {
-        ctx.beginPath();
-        ctx.moveTo(
-          this.graphRadius * Math.cos(angle * i),
-          this.graphRadius * Math.sin(angle * i),
-        );
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = '#F00';
-        ctx.stroke();
-      }
 
       if (i > 0) {
         ctx.beginPath();
@@ -152,8 +142,6 @@ export default class LatentGraph {
 
       ctx.restore();
     }
-
-    ctx.restore();
   }
 
   drawDashCircle(ctx) {

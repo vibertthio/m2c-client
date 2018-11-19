@@ -1,5 +1,6 @@
-import LatentGraph from './latent-graph';
 import PianorollGrid from './pianoroll-grid';
+import CircleGraph from './circle-graph';
+import ChordGraph from './chord-graph';
 import { Noise } from 'noisejs';
 
 function lerpColor(a, b, amount) {
@@ -24,7 +25,8 @@ export default class Renderer {
     this.matrix = [];
     this.chords = [];
     this.pianorollGrids = [];
-    this.dist = 0;
+    this.displayWidth = 0;
+    this.displayHeight = 0;
     this.fontSize = 1.0;
     this.beat = 0;
     this.sectionIndex = 0;
@@ -41,7 +43,6 @@ export default class Renderer {
     this.extendAlpha = 0;
     this.currentUpdateDir = 0;
     this.selectedLatent = 20;
-    this.displayWidth = 0;
 
     this.pianorollGrids[0] = new PianorollGrid(this, -1.0);
 
@@ -76,13 +77,13 @@ export default class Renderer {
     //   }
     // }
 
-    this.latentGraphs[0] = new LatentGraph(
+    this.chordGraph = new ChordGraph(
       this, 0.3, 0.66, 1.5, -0.33, 0.8);
-    this.latentGraphs[1] = new LatentGraph(
+    this.circleGraph = new CircleGraph(
       this, 0.3, 0.66, 1.5, 0.33, 0.8);
 
-    this.latentGraphs[0].setDisplay(3);
-    this.latentGraphs[1].setDisplay(10);
+    this.chordGraph.setDisplay(3);
+    this.circleGraph.setDisplay(10);
   }
 
 
@@ -124,7 +125,7 @@ export default class Renderer {
     const h = Math.min(width, height) * 0.25;
     const w = width * 0.5;
     this.displayWidth = w;
-    this.dist = h;
+    this.displayHeight = h;
     this.setFontSize(ctx, Math.pow(w / 1000, 0.4));
 
     ctx.translate(width * 0.5, height * 0.5 - 15);
@@ -192,14 +193,14 @@ export default class Renderer {
 
   handleMouseMoveOnGraph(e) {
     const { graphX, graphY, graphRadius, graphRadiusRatio } = this.latentGraph;
-    const r = Math.pow(this.dist, 2);
+    const r = Math.pow(this.displayHeight, 2);
     let x = e.clientX - this.width * 0.5;
     let y = e.clientY - this.height * 0.5;
     let d1 = Math.pow(x - graphX, 2) + Math.pow(y - graphY, 2);
     if (d1 < r * 1.2 & d1 > r * 0.1) {
       const d = Math.sqrt(d1);
       const range = 0.1;
-      const radius = range * graphRadiusRatio * this.dist + graphRadius;
+      const radius = range * graphRadiusRatio * this.displayHeight + graphRadius;
       const v = lerp(d, graphRadius, radius, 0, range);
       this.latent[this.selectedLatent] = v;
     }
@@ -218,7 +219,7 @@ export default class Renderer {
 
   // draw frame
   drawFrame(ctx, w, h) {
-    const unit = this.dist * 0.02;
+    const unit = this.displayHeight * 0.02;
 
     ctx.save();
 
@@ -254,16 +255,13 @@ export default class Renderer {
 
   // graphs
   drawLatents(ctx) {
-    for (let i = 0; i < 2; i += 1) {
-      for (let j = 0; j < 12; j += 1) {
-        const value = this.noise.perlin2(i * 2 + j * 0.1, this.frameCount * 0.005);
-        this.latents[i][j] = lerp(value, 0, 1, -0.01, 0.01);
-      }
-      this.latentGraphs[i].draw(ctx, this.latents[i], this.dist);
-
+    for (let j = 0; j < 12; j += 1) {
+      const i = 0;
+      const value = this.noise.perlin2(i * 2 + j * 0.1, this.frameCount * 0.005);
+      this.latents[0][j] = lerp(value, 0, 1, -0.01, 0.01);
     }
+    this.circleGraph.draw(ctx, this.displayHeight);
+    this.chordGraph.draw(ctx, this.displayHeight);
   }
-
-
 
 }
